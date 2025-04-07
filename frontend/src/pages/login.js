@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user"); // Default role is user
+  const [role, setRole] = useState("user");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -17,12 +17,15 @@ const Login = () => {
     });
 
     const data = await response.json();
+
     if (response.ok) {
+      // ✅ Save full user info in localStorage
+      localStorage.setItem("user", JSON.stringify(data));
       alert(`Logged in as ${role}`);
       if (role === "admin") {
-        navigate("/admin-dashboard"); // Redirect to admin page
+        navigate("/admin-dashboard");
       } else {
-        navigate("/user-dashboard"); // Redirect to user page
+        navigate("/user-dashboard");
       }
     } else {
       alert("Invalid login credentials");
@@ -31,16 +34,14 @@ const Login = () => {
 
   return (
     <div style={styles.container}>
-      {/* Logo */}
-      <img src="/C:\Users\seyar\OneDrive\Desktop\job-portal\frontend\public\schoolLogo.png" style={styles.logo} />
+      {/* ✅ Use relative path for logo image */}
+      <img src="/schoolLogo.png" style={styles.logo} alt="School Logo" />
 
-      {/* Welcome Title */}
       <h1 style={styles.title}>Welcome to Our Job Portal</h1>
       <p style={styles.subtitle}>
         Login or create an account to get started!
       </p>
 
-      {/* Login Form */}
       <form onSubmit={handleLogin} style={styles.form}>
         <input
           type="email"
@@ -65,7 +66,6 @@ const Login = () => {
         <button type="submit" style={styles.button}>Login</button>
       </form>
 
-      {/* Create Account Button */}
       <button onClick={() => navigate("/register")} style={styles.createButton}>
         Create Account
       </button>
@@ -73,7 +73,6 @@ const Login = () => {
   );
 };
 
-// Styles Object
 const styles = {
   container: {
     display: "flex",
@@ -88,7 +87,7 @@ const styles = {
     position: "absolute",
     top: "20px",
     left: "20px",
-    width: "80px", // Adjust size of logo
+    width: "80px",
   },
   title: {
     fontSize: "28px",
@@ -152,6 +151,5 @@ const styles = {
     transition: "background 0.3s",
   },
 };
-
 
 export default Login;

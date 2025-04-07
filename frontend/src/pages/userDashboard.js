@@ -12,17 +12,16 @@ const UserDashboard = () => {
       try {
         const response = await fetch("http://localhost:3000/api/jobs");
         const data = await response.json();
-
-        // If the data is already an array, directly set it
         if (Array.isArray(data)) {
-          setJobs(data);  // Set jobs directly as it's an array
+          setJobs(data);
+        } else if (Array.isArray(data.jobs)) {
+          setJobs(data.jobs);
         } else {
-          console.error("Received non-array data:", data);
-          setJobs([]);  // Set empty array in case the data is not an array
+          console.error("Unexpected response format:", data);
         }
       } catch (error) {
         console.error("Error fetching jobs:", error);
-        setJobs([]);  // Set empty array in case of error
+        setJobs([]);
       }
     };
     fetchJobs();
@@ -30,13 +29,13 @@ const UserDashboard = () => {
 
   const handleLogout = () => navigate("/login");
   const handleViewSavedJobs = () => navigate("/saved-jobs");
+  const handleJobClick = (id) => navigate(`/job/${id}`);
 
   const getRandomImage = () => {
     const imageIndex = Math.floor(Math.random() * 9) + 1;
     return `/jobimages/image${imageIndex}.jpg`;
   };
 
-  // Pagination Logic
   const totalPages = Math.ceil(jobs.length / jobsPerPage);
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
@@ -46,8 +45,10 @@ const UserDashboard = () => {
     <div>
       <nav style={styles.navbar}>
         <h2 style={styles.navbarText}>Welcome back!</h2>
-        <button onClick={handleViewSavedJobs} style={styles.button}>View Saved Jobs</button>
-        <button onClick={handleLogout} style={styles.button}>Logout</button>
+        <div>
+          <button onClick={handleViewSavedJobs} style={styles.button}>View Saved Jobs</button>
+          <button onClick={handleLogout} style={styles.button}>Logout</button>
+        </div>
       </nav>
 
       <section style={styles.mainContent}>
@@ -59,12 +60,16 @@ const UserDashboard = () => {
               <p>No jobs posted yet.</p>
             ) : (
               currentJobs.map((job) => (
-                <div key={job.id} style={styles.jobCard}>
-                  <img 
-                    src={getRandomImage()} 
-                    alt={job.title} 
-                    style={styles.jobImage} 
-                    onError={(e) => (e.target.src = "/jobimages/default.jpg")} // Fallback
+                <div
+                  key={job.id}
+                  style={styles.jobCard}
+                  onClick={() => handleJobClick(job.id)}
+                >
+                  <img
+                    src={getRandomImage()}
+                    alt={job.title}
+                    style={styles.jobImage}
+                    onError={(e) => (e.target.src = "/jobimages/default.jpg")}
                   />
                   <h3>{job.title}</h3>
                   <p>{job.experience_level}</p>
@@ -74,7 +79,7 @@ const UserDashboard = () => {
             )}
           </div>
         </div>
-        
+
         {/* Pagination Controls */}
         <div style={styles.paginationContainer}>
           {Array.from({ length: totalPages }, (_, index) => (
@@ -104,15 +109,17 @@ const styles = {
     flex: 1,
     textAlign: "center",
     color: "white",
+    fontSize: "1.5rem",
   },
   button: {
     backgroundColor: "#fff",
     color: "#007bff",
-    padding: "10px",
+    padding: "10px 15px",
     border: "none",
     borderRadius: "5px",
     cursor: "pointer",
     marginLeft: "10px",
+    fontSize: "1rem",
   },
   mainContent: {
     padding: "40px 20px",
@@ -142,10 +149,12 @@ const styles = {
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
     backgroundColor: "#fff",
     textAlign: "center",
+    cursor: "pointer",
+    transition: "transform 0.2s ease",
   },
   jobImage: {
-    width: "200px", 
-    height: "200px", 
+    width: "200px",
+    height: "200px",
     objectFit: "cover",
     borderRadius: "5px",
     marginBottom: "10px",
