@@ -19,7 +19,7 @@ const Login = () => {
     const data = await response.json();
 
     if (response.ok) {
-      // ✅ Save full user info in localStorage
+      // Save full user info in localStorage
       localStorage.setItem("user", JSON.stringify(data));
       alert(`Logged in as ${role}`);
       if (role === "admin") {
@@ -34,7 +34,7 @@ const Login = () => {
 
   return (
     <div style={styles.container}>
-      {/* ✅ Use relative path for logo image */}
+      {/*Use relative path for logo image */}
       <img src="/schoolLogo.png" style={styles.logo} alt="School Logo" />
 
       <h1 style={styles.title}>Welcome to Our Job Portal</h1>

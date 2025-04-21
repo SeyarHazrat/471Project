@@ -1,3 +1,4 @@
+// Imports
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,6 +8,7 @@ const AdminViewApplications = () => {
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
+    // Get user information 
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser && storedUser.id) {
       setUserId(storedUser.id);
@@ -23,6 +25,38 @@ const AdminViewApplications = () => {
       setApplications(data);
     } catch (err) {
       console.error("Failed to fetch applications:", err);
+    }
+  };
+
+  const handleStatusChange = async (applicationId, newStatus) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/applications/${applicationId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        fetchApplications(userId);
+      } else {
+        alert("Failed to update status");
+      }
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
+  };
+
+  const handleDelete = async (applicationId) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/applications/${applicationId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchApplications(userId);
+      } else {
+        alert("Failed to delete application");
+      }
+    } catch (err) {
+      console.error("Error deleting application:", err);
     }
   };
 
@@ -44,10 +78,13 @@ const AdminViewApplications = () => {
             <tr>
               <th style={styles.th}>Applicant Name</th>
               <th style={styles.th}>Email</th>
-              <th style={styles.th}>Experience</th>
+              <th style={styles.th}></th>
               <th style={styles.th}>Resume</th>
+              <th style={styles.th}>Skills</th>
+              <th style={styles.th}>Degree</th>
               <th style={styles.th}>Job Title</th>
               <th style={styles.th}>Status</th>
+              <th style={styles.th}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -61,8 +98,28 @@ const AdminViewApplications = () => {
                     View Resume
                   </a>
                 </td>
+                <td style={styles.td}>{app.skills || "N/A"}</td>
+                <td style={styles.td}>{app.degree || "N/A"}</td>
                 <td style={styles.td}>{app.job_title}</td>
-                <td style={styles.td}>{app.status}</td>
+                <td style={styles.td}>
+                  <select
+                    value={app.status}
+                    onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                    style={styles.select}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Accepted">Accepted</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </td>
+                <td style={styles.td}>
+                  <button
+                    style={styles.deleteButton}
+                    onClick={() => handleDelete(app.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -112,6 +169,19 @@ const styles = {
   td: {
     padding: "12px",
     borderBottom: "1px solid #ccc",
+  },
+  select: {
+    padding: "6px",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+  },
+  deleteButton: {
+    backgroundColor: "#dc3545",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
 };
 

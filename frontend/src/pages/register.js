@@ -2,34 +2,34 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
-  const [userName, setUserName] = useState("");  // State for username input
-  const [email, setEmail] = useState("");        // State for email input
-  const [password, setPassword] = useState("");  // State for password input
-  const [role, setRole] = useState("user");      // State for user role (default is "user")
-  const navigate = useNavigate();  // Hook to navigate to different routes after registration
+  const [userName, setUserName] = useState("");  
+  const [email, setEmail] = useState("");        
+  const [password, setPassword] = useState("");  // State 
+  const [role, setRole] = useState("user");      
+  const navigate = useNavigate();  // Hook 
 
-  // Function to handle form submission (registration)
+  // Function to handle form
   const handleRegister = async (e) => {
-    e.preventDefault();  // Prevents page refresh on form submission
+    e.preventDefault();  
 
-    // Sending the actual input values as JSON to the backend
+    // Send information 
     const response = await fetch("http://localhost:3000/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        user_name: userName,  // Send actual username
-        email,                // Send actual email
-        password,             // Send actual password
-        role                  // Send selected role (user/admin)
+        user_name: userName,  
+        email,                
+        password,             
+        role                  
       }),
     });
 
-    const data = await response.json();  // Parse the response data from backend
+    const data = await response.json();  
     if (response.ok) {
       alert("Account created successfully! Please log in.");
-      navigate("/login");  // Redirect to login page after successful registration
+      navigate("/login");  
     } else {
-      alert(data.message || "Failed to create account");  // Show error message if registration fails
+      alert(data.message || "Failed to create account");  
     }
   };
 
@@ -45,7 +45,7 @@ const Register = () => {
           type="text"
           placeholder="Username"
           value={userName}
-          onChange={(e) => setUserName(e.target.value)}  // Update username state
+          onChange={(e) => setUserName(e.target.value)}  
           required
           style={styles.input}
         />
@@ -53,7 +53,7 @@ const Register = () => {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}  // Update email state
+          onChange={(e) => setEmail(e.target.value)} 
           required
           style={styles.input}
         />
@@ -61,7 +61,7 @@ const Register = () => {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}  // Update password state
+          onChange={(e) => setPassword(e.target.value)}  
           required
           style={styles.input}
         />

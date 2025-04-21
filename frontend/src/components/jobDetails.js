@@ -1,17 +1,19 @@
+//Relevant Imports
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+// Component state
 const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [company, setCompany] = useState(null);
-  const [location] = useState(Math.random() > 0.5 ? "Calgary" : "Vancouver");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rating, setRating] = useState(5);
-  const [averageRating, setAverageRating] = useState(5);
+  const [averageRating, setAverageRating] = useState(null);
 
+  // Fetch job details
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
@@ -28,10 +30,12 @@ const JobDetails = () => {
         const reviewRes = await fetch(`http://localhost:3000/api/reviews/company/${data.company_id}`);
         if (!reviewRes.ok) throw new Error("Reviews not found");
         const reviewData = await reviewRes.json();
-        const avg = reviewData.length > 0
-          ? reviewData.reduce((sum, r) => sum + r.rating, 0) / reviewData.length
-          : 5;
-        setAverageRating(avg.toFixed(1));
+        if (reviewData.length === 0) {
+          setAverageRating(null);
+        } else {
+          const avg = reviewData.reduce((sum, r) => sum + r.rating, 0) / reviewData.length;
+          setAverageRating(avg.toFixed(1));
+        }
       } catch (error) {
         console.error("Error fetching job details:", error);
         setError("Failed to load job details");
@@ -42,12 +46,14 @@ const JobDetails = () => {
     fetchJobDetails();
   }, [id]);
 
+  // Handle applying for a job
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
     formData.append("job_id", job.id);
     formData.append("user_id", 2);
+      
 
     try {
       const response = await fetch("http://localhost:3000/api/apply", {
@@ -69,6 +75,7 @@ const JobDetails = () => {
     }
   };
 
+  // Handle saving a rating
   const handleRatingSubmit = async () => {
     try {
       const res = await fetch("http://localhost:3000/api/reviews", {
@@ -79,7 +86,10 @@ const JobDetails = () => {
       const result = await res.json();
       if (res.ok) {
         alert("Thanks for your review!");
-        setAverageRating((prev) => ((parseFloat(prev) + rating) / 2).toFixed(1));
+        setAverageRating((prev) => {
+          const previous = parseFloat(prev) || 0;
+          return ((previous + rating) / 2).toFixed(1);
+        });
       } else {
         alert(result.message || "Failed to submit review");
       }
@@ -88,6 +98,7 @@ const JobDetails = () => {
     }
   };
 
+  // Handle saving a job
   const handleSaveJob = async () => {
     try {
       const response = await fetch("http://localhost:3000/api/saved_jobs", {
@@ -112,40 +123,51 @@ const JobDetails = () => {
   if (!job || !company) return <p style={styles.error}>No job details available.</p>;
 
   return (
+    // Navigation and job display
     <div style={styles.container}>
-      <button onClick={() => navigate("/user-dashboard")} style={styles.backButton}>
+      <button onClick={() => {
+        const isAdmin = new URLSearchParams(window.location.search).get("from") === "admin";
+        navigate(isAdmin ? "/admin-dashboard" : "/user-dashboard");
+      }} style={styles.backButton}>
         ← Back to Home
       </button>
-      <img src={`/jobimages/image${(job.id % 9) + 1}.jpg`} alt={job.title} style={styles.jobImage} />
+      <img src={job.image || "/jobimages/image1.jpg"} alt={job.title} style={styles.jobImage} />
       <div style={styles.detailsContainer}>
-        <h1 style={styles.title}>{job.title}</h1>
-        <h2 style={styles.company}>{company.name}</h2>
-        <p style={styles.location}><strong>Location:</strong> {location}</p>
-        <p style={styles.experience}><strong>Experience Level:</strong> {job.experience_level}</p>
-        <p style={styles.description}>{job.description}</p>
-        <div>
-          <h3>Average Rating: {averageRating} / 5</h3>
-          <label>Review this Job:</label>
-          <select value={rating} onChange={(e) => setRating(parseInt(e.target.value))} style={styles.input}>
+        <h1 style={styles.title}>Job Title: {job.title}</h1>
+        <div style={styles.rowInfo}>
+          <p><strong>Company:</strong> {company.name}</p>
+          <p><strong>Location:</strong> {job.location}</p>
+          <p><strong>Experience Level:</strong> {job.experience_level}</p>
+          <p><strong>Salary:</strong> ${job.salary}</p>
+        </div>
+        <p style={styles.description}><strong>Job Description:</strong> {job.description}</p>
+
+        <div style={styles.reviewContainer}>
+          <h3>Average Review: {averageRating !== null ? `${averageRating} / 5` : "No reviews yet"}</h3>
+          <label>Review this Company:</label>
+          <select value={rating} onChange={(e) => setRating(parseInt(e.target.value))} style={styles.reviewSelect}>
             {[5, 4, 3, 2, 1].map((r) => (
               <option key={r} value={r}>{r} Star{r > 1 ? "s" : ""}</option>
             ))}
           </select>
-          <button onClick={handleRatingSubmit} style={{ ...styles.button, marginTop: "10px" }}>Submit Review</button>
+          <button onClick={handleRatingSubmit} style={styles.reviewButton}>Submit Review</button>
         </div>
+
         <button onClick={handleSaveJob} style={{ ...styles.button, marginTop: "15px", backgroundColor: "#28a745" }}>
           Save this Job
         </button>
       </div>
+
       <div style={styles.applyContainer}>
         <h2 style={styles.applyTitle}>Apply Now</h2>
         <form style={styles.form} onSubmit={handleSubmit} encType="multipart/form-data">
           <input type="text" name="name" placeholder="Your Name" style={styles.input} required />
           <input type="text" name="lastname" placeholder="Last Name" style={styles.input} required />
           <input type="text" name="address" placeholder="Address" style={styles.input} required />
-          <input type="text" name="education" placeholder="Education" style={styles.input} required />
-          <input type="text" name="experience" placeholder="Years of Experience" style={styles.input} required />
+          <label style={styles.resumeLabel}>Upload Resume</label>
           <input type="file" name="resume" accept="application/pdf" style={styles.input} required />
+          <input type="text" name="skills" placeholder="Relevant Skills" style={styles.input} required />
+          <input type="text" name="degree" placeholder="Degree" style={styles.input} required />
           <button type="submit" style={styles.button}>Submit Application</button>
         </form>
       </div>
@@ -153,6 +175,7 @@ const JobDetails = () => {
   );
 };
 
+// styling
 const styles = {
   container: {
     maxWidth: "900px",
@@ -189,23 +212,36 @@ const styles = {
     fontWeight: "bold",
     marginBottom: "10px",
   },
-  company: {
-    fontSize: "1.5rem",
-    color: "#007bff",
-    marginBottom: "10px",
-  },
-  location: {
-    fontSize: "1.2rem",
-    marginBottom: "10px",
-  },
-  experience: {
-    fontSize: "1.2rem",
-    marginBottom: "10px",
+  rowInfo: {
+    display: "flex",
+    justifyContent: "space-around",
+    marginBottom: "20px",
+    gap: "10px",
+    flexWrap: "wrap"
   },
   description: {
     fontSize: "1.1rem",
     lineHeight: "1.5",
     color: "#444",
+  },
+  reviewContainer: {
+    marginTop: "20px",
+    marginBottom: "10px",
+  },
+  reviewSelect: {
+    padding: "6px 10px",
+    fontSize: "0.95rem",
+    borderRadius: "5px",
+    margin: "8px",
+  },
+  reviewButton: {
+    padding: "8px 16px",
+    fontSize: "0.95rem",
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
   applyContainer: {
     marginTop: "30px",
@@ -250,6 +286,11 @@ const styles = {
     fontSize: "1.5rem",
     color: "red",
   },
+  resumeLabel: {
+    fontSize: "1rem",
+    marginTop: "10px",
+    color: "#333",
+  }
 };
 
 export default JobDetails;

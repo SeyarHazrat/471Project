@@ -1,3 +1,4 @@
+// Handle imports
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -6,6 +7,7 @@ const AdminViewJobs = () => {
   const [jobs, setJobs] = useState([]);
   const [userId, setUserId] = useState(null);
 
+  // Fetch jobs when component mounts
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser && storedUser.id) {
@@ -16,6 +18,7 @@ const AdminViewJobs = () => {
     }
   }, []);
 
+  // Fetch jobs posted by current admin
   const fetchJobs = async (id) => {
     try {
       const res = await fetch(`http://localhost:3000/api/jobs/user/${id}`);
@@ -27,7 +30,25 @@ const AdminViewJobs = () => {
   };
 
   const handleRowClick = (jobId) => {
-    navigate(`/job/${jobId}`);
+    navigate(`/job/${jobId}?from=admin`);
+  };
+
+  // Handle deleting a job
+  const handleDelete = async (jobId) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+    try {
+      const res = await fetch(`http://localhost:3000/api/jobs/${jobId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        // Remove job from local state
+        setJobs((prev) => prev.filter((job) => job.id !== jobId));
+      } else {
+        alert("Failed to delete job");
+      }
+    } catch (err) {
+      console.error("Error deleting job:", err);
+    }
   };
 
   const handleBack = () => {
@@ -50,15 +71,27 @@ const AdminViewJobs = () => {
               <th style={styles.th}>Company</th>
               <th style={styles.th}>Location</th>
               <th style={styles.th}>Experience Level</th>
+              <th style={styles.th}></th>
+              <th style={styles.th}></th> {/* Delete column */}
             </tr>
           </thead>
           <tbody>
             {jobs.map((job) => (
-              <tr key={job.id} onClick={() => handleRowClick(job.id)} style={styles.row}>
+              <tr key={job.id} style={styles.row}>
                 <td style={styles.td}>{job.title}</td>
                 <td style={styles.td}>{job.company_name}</td>
                 <td style={styles.td}>{job.location}</td>
                 <td style={styles.td}>{job.experience_level}</td>
+                <td style={styles.td}>
+                  <button style={styles.viewButton} onClick={() => handleRowClick(job.id)}>
+                    View Job
+                  </button>
+                </td>
+                <td style={styles.td}>
+                  <button style={styles.deleteButton} onClick={() => handleDelete(job.id)}>
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -68,6 +101,7 @@ const AdminViewJobs = () => {
   );
 };
 
+// Styling
 const styles = {
   container: {
     padding: "40px",
@@ -110,6 +144,22 @@ const styles = {
     borderBottom: "1px solid #ccc",
   },
   row: {
+    cursor: "default",
+  },
+  viewButton: {
+    padding: "8px 12px",
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  deleteButton: {
+    padding: "8px 12px",
+    backgroundColor: "#dc3545",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
     cursor: "pointer",
   },
 };

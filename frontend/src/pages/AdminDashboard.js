@@ -1,10 +1,20 @@
+// Dashboard
+// Imports
 import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
   return (
     <div style={styles.container}>
+      <button onClick={handleLogout} style={styles.logoutButton}>
+        Logout
+      </button>
       <h1 style={styles.heading}>Welcome Admin</h1>
       <div style={styles.grid}>
         <div style={styles.card} onClick={() => navigate("/admin/view-jobs")}>
@@ -24,10 +34,12 @@ const AdminDashboard = () => {
   );
 };
 
+// Styling
 const styles = {
   container: {
     padding: "40px",
     textAlign: "center",
+    position: "relative"
   },
   heading: {
     fontSize: "2.5rem",
@@ -47,6 +59,18 @@ const styles = {
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
     cursor: "pointer",
     transition: "transform 0.2s ease",
+  },
+  logoutButton: {
+    position: "absolute",
+    top: "20px",
+    right: "20px",
+    backgroundColor: "#dc3545",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    padding: "10px 15px",
+    cursor: "pointer",
+    fontSize: "14px",
   },
 };
 

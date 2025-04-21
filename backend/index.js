@@ -2,48 +2,65 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const multer = require("multer");
+const path = require("path");
 
 // Create an express app
 const app = express();
 
-// Middleware to handle JSON and CORS
+// Middleware
 app.use(express.json());
 app.use(cors());
+app.use("/uploads", express.static("uploads"));
+app.use("/jobimages", express.static("jobimages"));
 
 // Set up MySQL connection
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'root', // Your MySQL username
-  password: 'Seyar456!', // Your MySQL password
-  database: 'job_portal' // The name of your database
+  user: 'root',
+  password: 'Seyar456!',
+  database: 'job_portal'
 });
 
-// Test the connection
+// Test DB connection
 db.connect((err) => {
-  if (err) {
-    console.error('Error connecting to MySQL:', err);
-  } else {
-    console.log('Connected to MySQL database!');
-  }
+  if (err) console.error('Error connecting to MySQL:', err);
+  else console.log('Connected to MySQL database!');
 });
-// Route handler
+
+console.log("Server is starting...");
+
+// Default route
 app.get('/', (req, res) => {
-    res.send('Welcome to the Job Portal API!');
+  res.send('Welcome to the Job Portal API!');
+});
+
+// ----------------- JOB ROUTES -----------------
+app.delete('/api/jobs/:id', (req, res) => {
+  const jobId = req.params.id;
+  const query = 'DELETE FROM jobs WHERE id = ?';
+  db.query(query, [jobId], (err) => {
+    if (err) {
+      console.error("Error deleting job:", err);
+      return res.status(500).json({ error: 'Server error' });
+    }
+    res.status(200).json({ message: 'Job deleted successfully' });
   });
-  
+});
+
 // Get all jobs
 app.get('/api/jobs', (req, res) => {
-    const query = 'SELECT jobs.id, jobs.title, jobs.experience_level, companies.name as company_name FROM jobs JOIN companies ON jobs.company_id = companies.id';
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error('Error fetching jobs:', err);
-            return res.status(500).json({ error: 'Server error' });  // Send JSON response with error message
-        }
-        res.json(results);  // Ensure this is an array
-    });
+  const query = `
+    SELECT jobs.id, jobs.title, jobs.experience_level, companies.name as company_name
+    FROM jobs JOIN companies ON jobs.company_id = companies.id
+  `;
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Server error' });
+    res.json(results);
+  });
 });
 
-
+// Get specific job details
 app.get('/api/jobs/:id', (req, res) => {
   const jobId = req.params.id;
   const query = `
@@ -54,78 +71,36 @@ app.get('/api/jobs/:id', (req, res) => {
     WHERE jobs.id = ?
   `;
   db.query(query, [jobId], (err, result) => {
-    if (err) {
-      console.error('Error fetching job:', err);
-      res.status(500).send('Server error');
-    } else if (result.length === 0) {
-      res.status(404).send('Job not found');
-    } else {
-      res.json(result[0]);
-    }
+    if (err) return res.status(500).send('Server error');
+    if (result.length === 0) return res.status(404).send('Job not found');
+    res.json(result[0]);
   });
 });
 
+// Create a job with image upload
+const jobImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "jobimages/"),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const uploadJobImage = multer({ storage: jobImageStorage });
 
-console.log("Server is starting...");
+app.post("/api/jobs", uploadJobImage.single("image"), (req, res) => {
+  const { title, experience_level, description, location, user_id, company_id } = req.body;
+  const image = req.file ? req.file.filename : null;
 
-//Fetching and saving username
-app.post('/api/user', (req, res) => {
-    const { user_name } = req.body;
-  
-    const query = 'INSERT INTO users (user_name) VALUES (?)';
-    db.query(query, [user_name], (err, result) => {
-      if (err) {
-        console.error('Error saving user:', err);
-        res.status(500).send('Server error');
-      } else {
-        // Fetch and send back the user's name
-        const selectQuery = 'SELECT user_name FROM users WHERE id = ?';
-        db.query(selectQuery, [result.insertId], (err, userResult) => {
-          if (err) {
-            console.error('Error fetching user:', err);
-            res.status(500).send('Server error');
-          } else {
-            res.json(userResult[0]); // Send back the saved user's name
-          }
-        });
-      }
-    });
-  });
-//Register user
-app.post('/api/register', (req, res) => {
-    const { user_name, email, password, role } = req.body;
-    const query = 'INSERT INTO users (user_name, email, password, role) VALUES (?, ?, ?, ?)';
-    
-    db.query(query, [user_name, email, password, role], (err, result) => {
-      if (err) {
-        console.error('Error registering user:', err);
-        res.status(500).send({ error: 'Registration failed' });
-      } else {
-        res.status(201).send({ message: 'User registered successfully' });
-      }
-    });
-  });
+  if (!image) return res.status(400).json({ error: "Image upload failed" });
 
-//Login 
-
-app.post('/api/login', (req, res) => {
-  const { email, password, role } = req.body;
-  const query = 'SELECT * FROM users WHERE email = ? AND password = ? AND role = ?';
-
-  db.query(query, [email, password, role], (err, results) => {
-    if (err) {
-      console.error('Error during login:', err);
-      res.status(500).send({ error: 'Login failed' });
-    } else if (results.length > 0) {
-      // ✅ Send full user data (so frontend can store in localStorage)
-      res.send(results[0]);
-    } else {
-      res.status(401).send({ error: 'Invalid credentials' });
-    }
+  const query = `
+    INSERT INTO jobs (title, experience_level, description, location, user_id, company_id, image)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+  db.query(query, [title, experience_level, description, location, user_id, company_id, image], (err, result) => {
+    if (err) return res.status(500).json({ error: "Server error" });
+    res.status(201).json({ message: "Job created successfully", jobId: result.insertId });
   });
 });
 
-// Get jobs posted by a specific user (admin)
+// Get jobs posted by a specific user
 app.get('/api/jobs/user/:id', (req, res) => {
   const userId = req.params.id;
   const query = `
@@ -135,116 +110,124 @@ app.get('/api/jobs/user/:id', (req, res) => {
     WHERE jobs.user_id = ?
   `;
   db.query(query, [userId], (err, result) => {
-    if (err) {
-      console.error("Error fetching user's jobs:", err);
-      return res.status(500).json({ error: "Server error" });
-    }
+    if (err) return res.status(500).json({ error: "Server error" });
     res.json(result);
   });
 });
 
+// ----------------- COMPANY ROUTES -----------------
+
+// Get a company by ID
 app.get("/api/companies/:id", (req, res) => {
   const companyId = req.params.id;
   const query = "SELECT * FROM companies WHERE id = ?";
   db.query(query, [companyId], (err, result) => {
-    if (err) {
-      console.error("Error fetching company:", err);
-      res.status(500).json({ error: "Server error" });
-    } else if (result.length === 0) {
-      res.status(404).json({ error: "Company not found" });
-    } else {
-      res.json(result[0]);
-    }
+    if (err) return res.status(500).json({ error: "Server error" });
+    if (result.length === 0) return res.status(404).json({ error: "Company not found" });
+    res.json(result[0]);
   });
 });
-  
 
-const multer = require("multer");
-const path = require("path");
+// ----------------- USER ROUTES -----------------
 
-// Storage setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Store resumes here
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique file name
-  }
+// Register user
+app.post('/api/register', (req, res) => {
+  const { user_name, email, password, role } = req.body;
+  const query = 'INSERT INTO users (user_name, email, password, role) VALUES (?, ?, ?, ?)';
+  db.query(query, [user_name, email, password, role], (err) => {
+    if (err) return res.status(500).send({ error: 'Registration failed' });
+    res.status(201).send({ message: 'User registered successfully' });
+  });
 });
 
-const upload = multer({ storage });
+// Login
+app.post('/api/login', (req, res) => {
+  const { email, password, role } = req.body;
+  const query = 'SELECT * FROM users WHERE email = ? AND password = ? AND role = ?';
+  db.query(query, [email, password, role], (err, results) => {
+    if (err) return res.status(500).send({ error: 'Login failed' });
+    if (results.length > 0) res.send(results[0]);
+    else res.status(401).send({ error: 'Invalid credentials' });
+  });
+});
+
+// Save username
+app.post('/api/user', (req, res) => {
+  const { user_name } = req.body;
+  const query = 'INSERT INTO users (user_name) VALUES (?)';
+  db.query(query, [user_name], (err, result) => {
+    if (err) return res.status(500).send('Server error');
+    db.query('SELECT user_name FROM users WHERE id = ?', [result.insertId], (err, userResult) => {
+      if (err) return res.status(500).send('Server error');
+      res.json(userResult[0]);
+    });
+  });
+});
+
+// ----------------- APPLICATION ROUTES -----------------
+
+// Submit a job application
+const resumeStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage: resumeStorage });
 
 app.post('/api/apply', upload.single("resume"), (req, res) => {
-  const { job_id, user_id, name, email, experience } = req.body;
-  const resume = req.file.filename;
+  const { job_id, user_id, name, email, experience, skills, degree } = req.body;
+  const resume = req.file ? req.file.filename : null;
 
   const query = `
-    INSERT INTO applications (job_id, user_id, status, resume)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO applications (job_id, user_id, status, resume, skills, degree)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
-  db.query(query, [job_id, user_id, "Pending", resume], (err, result) => {
-    if (err) {
-      console.error("Error saving application:", err);
-      res.status(500).send("Server error");
-    } else {
-      res.status(201).json({ message: "Application submitted!", applicationId: result.insertId });
-    }
+  db.query(query, [job_id, user_id, "Pending", resume, skills, degree], (err, result) => {
+    if (err) return res.status(500).send("Server error");
+    res.status(201).json({ message: "Application submitted!", applicationId: result.insertId });
   });
 });
 
-app.use("/uploads", express.static("uploads"));
-
-app.get('/api/reviews/company/:company_id', (req, res) => {
-  const companyId = req.params.company_id;
-  const query = 'SELECT * FROM reviews WHERE company_id = ?';
-
-  db.query(query, [companyId], (err, results) => {
-    if (err) {
-      console.error('Error fetching reviews:', err);
-      return res.status(500).json({ error: 'Server error' });
-    }
-
-    if (results.length === 0) {
-      return res.status(200).json([]); // Return empty array if no reviews
-    }
-
+// Get applications to jobs posted by an admin
+app.get("/api/applications/admin/:adminId", (req, res) => {
+  const query = `
+    SELECT 
+      applications.id, applications.status, applications.resume,
+      applications.skills, applications.degree,
+      users.user_name AS name, users.email AS email,
+      jobs.title AS job_title
+    FROM applications
+    JOIN jobs ON applications.job_id = jobs.id
+    JOIN users ON applications.user_id = users.id
+    WHERE jobs.user_id = ?
+  `;
+  db.query(query, [req.params.adminId], (err, results) => {
+    if (err) return res.status(500).json({ error: "Server error" });
     res.json(results);
   });
 });
+
+// Delete an application
+app.delete('/api/applications/:id', (req, res) => {
+  db.query('DELETE FROM applications WHERE id = ?', [req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: 'Server error' });
+    res.status(200).json({ message: 'Application deleted successfully' });
+  });
+});
+
+// ----------------- SAVED JOB ROUTES -----------------
+
+// Save a job
 app.post('/api/saved_jobs', (req, res) => {
   const { user_id, job_id } = req.body;
-
   const query = 'INSERT INTO saved_jobs (user_id, job_id, saved_at) VALUES (?, ?, NOW())';
-  db.query(query, [user_id, job_id], (err, result) => {
-    if (err) {
-      console.error('Error saving job:', err);
-      res.status(500).send('Server error');
-    } else {
-      res.status(201).send({ message: 'Job saved successfully' });
-    }
+  db.query(query, [user_id, job_id], (err) => {
+    if (err) return res.status(500).send('Server error');
+    res.status(201).send({ message: 'Job saved successfully' });
   });
 });
+
+// Get saved jobs
 app.get('/api/saved_jobs/user/:user_id', (req, res) => {
-  const userId = req.params.user_id;
-  const query = `
-    SELECT saved_jobs.*, jobs.title, jobs.experience_level, companies.name AS company_name
-    FROM saved_jobs
-    JOIN jobs ON saved_jobs.job_id = jobs.id
-    JOIN companies ON jobs.company_id = companies.id
-    WHERE saved_jobs.user_id = ?
-  `;
-  db.query(query, [userId], (err, result) => {
-    if (err) {
-      console.error('Error getting saved jobs:', err);
-      res.status(500).send('Server error');
-    } else {
-      res.json(result);
-    }
-  });
-});
-// Get saved jobs for a user
-app.get('/api/saved_jobs/user/:user_id', (req, res) => {
-  const userId = req.params.user_id;
   const query = `
     SELECT jobs.*, companies.name as company_name
     FROM saved_jobs
@@ -252,44 +235,33 @@ app.get('/api/saved_jobs/user/:user_id', (req, res) => {
     JOIN companies ON jobs.company_id = companies.id
     WHERE saved_jobs.user_id = ?
   `;
-  db.query(query, [userId], (err, results) => {
-    if (err) {
-      console.error('Error fetching saved jobs:', err);
-      res.status(500).json({ error: 'Server error' });
-    } else {
-      res.json(results);
-    }
+  db.query(query, [req.params.user_id], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Server error' });
+    res.json(results);
   });
 });
 
-app.get("/api/applications/admin/:adminId", (req, res) => {
-  const adminId = req.params.adminId;
-  const query = `
-    SELECT 
-      applications.id,
-      applications.status,
-      applications.resume,
-      users.user_name AS name,
-      users.email AS email,
-      jobs.title AS job_title
-    FROM applications
-    JOIN jobs ON applications.job_id = jobs.id
-    JOIN users ON applications.user_id = users.id
-    WHERE jobs.user_id = ?
-  `;
-
-  db.query(query, [adminId], (err, results) => {
-    if (err) {
-      console.error("Error fetching applications for admin:", err);
-      res.status(500).json({ error: "Server error" });
-    } else {
-      res.json(results);
-    }
+// Remove a saved job
+app.delete('/api/saved_jobs', (req, res) => {
+  const { user_id, job_id } = req.body;
+  db.query('DELETE FROM saved_jobs WHERE user_id = ? AND job_id = ?', [user_id, job_id], (err) => {
+    if (err) return res.status(500).json({ error: 'Server error' });
+    res.status(200).json({ message: 'Saved job removed successfully' });
   });
 });
 
+// ----------------- REVIEWS -----------------
 
-// Set up the server to listen on port 5000
+// Get reviews for a company
+app.get('/api/reviews/company/:company_id', (req, res) => {
+  const query = 'SELECT * FROM reviews WHERE company_id = ?';
+  db.query(query, [req.params.company_id], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Server error' });
+    res.json(results);
+  });
+});
+
+// Start the server
 app.listen(3000, () => {
   console.log('Server is running on http://localhost:3000');
 });

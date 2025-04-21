@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
+  const [experienceFilter, setExperienceFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 9;
 
@@ -14,32 +17,45 @@ const UserDashboard = () => {
         const data = await response.json();
         if (Array.isArray(data)) {
           setJobs(data);
+          setFilteredJobs(data);
         } else if (Array.isArray(data.jobs)) {
           setJobs(data.jobs);
+          setFilteredJobs(data.jobs);
         } else {
           console.error("Unexpected response format:", data);
         }
       } catch (error) {
         console.error("Error fetching jobs:", error);
         setJobs([]);
+        setFilteredJobs([]);
       }
     };
     fetchJobs();
   }, []);
 
+  useEffect(() => {
+    let filtered = jobs;
+    if (experienceFilter) {
+      filtered = filtered.filter((job) => job.experience_level === experienceFilter);
+    }
+    if (locationFilter) {
+      filtered = filtered.filter((job) => job.location === locationFilter);
+    }
+    setFilteredJobs(filtered);
+    setCurrentPage(1);
+  }, [experienceFilter, locationFilter, jobs]);
+
   const handleLogout = () => navigate("/login");
   const handleViewSavedJobs = () => navigate("/saved-jobs");
   const handleJobClick = (id) => navigate(`/job/${id}`);
 
-  const getRandomImage = () => {
-    const imageIndex = Math.floor(Math.random() * 9) + 1;
-    return `/jobimages/image${imageIndex}.jpg`;
-  };
+  const experienceLevels = [...new Set(jobs.map(job => job.experience_level))];
+  const locations = [...new Set(jobs.map(job => job.location))];
 
-  const totalPages = Math.ceil(jobs.length / jobsPerPage);
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
+  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
 
   return (
     <div>
@@ -53,11 +69,28 @@ const UserDashboard = () => {
 
       <section style={styles.mainContent}>
         <h1 style={styles.mainTitle}>A one-stop shop for your job searching needs</h1>
+
+        <div style={styles.filterWrapper}>
+          <h3 style={styles.filterTitle}>Filter Jobs</h3>
+          <div style={styles.filterContainer}>
+            <div>
+              <label>Filter by Experience: </label>
+              <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)} style={styles.select}>
+                <option value="">All Experience Levels</option>
+                {experienceLevels.map((level, idx) => (
+                  <option key={idx} value={level}>{level}</option>
+                ))}
+              </select>
+            </div>
+            
+          </div>
+        </div>
+
         <div style={styles.jobsSection}>
           <h2>View Jobs</h2>
           <div style={styles.jobList}>
             {currentJobs.length === 0 ? (
-              <p>No jobs posted yet.</p>
+              <p>No jobs match your filters.</p>
             ) : (
               currentJobs.map((job) => (
                 <div
@@ -66,10 +99,10 @@ const UserDashboard = () => {
                   onClick={() => handleJobClick(job.id)}
                 >
                   <img
-                    src={getRandomImage()}
+                    src={job.image ? `/jobimages/${job.image}` : "/jobimages/image1.jpg"}
                     alt={job.title}
                     style={styles.jobImage}
-                    onError={(e) => (e.target.src = "/jobimages/default.jpg")}
+                    onError={(e) => (e.target.src = "/jobimages/image1.jpg")}
                   />
                   <h3>{job.title}</h3>
                   <p>{job.experience_level}</p>
@@ -80,7 +113,6 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {/* Pagination Controls */}
         <div style={styles.paginationContainer}>
           {Array.from({ length: totalPages }, (_, index) => (
             <button
@@ -134,6 +166,28 @@ const styles = {
   },
   jobsSection: {
     marginTop: "20px",
+  },
+  filterWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    paddingRight: "40px",
+    marginBottom: "20px",
+  },
+  filterTitle: {
+    fontSize: "1.2rem",
+    marginBottom: "10px",
+    fontWeight: "bold",
+  },
+  filterContainer: {
+    display: "flex",
+    gap: "20px",
+  },
+  select: {
+    padding: "10px",
+    fontSize: "1rem",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
   },
   jobList: {
     display: "grid",

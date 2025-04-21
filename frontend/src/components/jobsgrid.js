@@ -7,7 +7,7 @@ const JobsGrid = () => {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      const response = await fetch("http://localhost:5000/api/jobs"); // Adjust endpoint as needed
+      const response = await fetch("http://localhost:5000/api/jobs"); 
       const data = await response.json();
       if (response.ok) {
         setJobs(data);
@@ -19,13 +19,13 @@ const JobsGrid = () => {
     fetchJobs();
   }, []);
 
-  // Function to randomly select an image from jobimages folder
+  // Imaging grabbing information for testing purposes. 
   const getRandomImage = () => {
-    const imageIndex = Math.floor(Math.random() * 9) + 1; // Get a number between 1 and 9
-    return `/jobimages/image${imageIndex}.jpg`; // Image path
+    const imageIndex = Math.floor(Math.random() * 9) + 1; 
+    return `/jobimages/image${imageIndex}.jpg`; 
   };
 
-  // Pagination Logic
+  //Grid logic
   const totalPages = Math.ceil(jobs.length / jobsPerPage);
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
@@ -59,7 +59,7 @@ const JobsGrid = () => {
     </div>
   );
 };
-
+//Styling
 const styles = {
   gridContainer: {
     display: "grid",
