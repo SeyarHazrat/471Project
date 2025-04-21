@@ -13,7 +13,7 @@ const UserDashboard = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/jobs");
+        const response = await fetch("https://job-portal-backend.onrender.com/api/jobs");
         const data = await response.json();
         if (Array.isArray(data)) {
           setJobs(data);

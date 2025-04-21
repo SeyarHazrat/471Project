@@ -12,12 +12,12 @@ const SavedJobs = () => {
 
   const fetchSavedJobs = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/saved_jobs/user/2");
+      const response = await fetch("https://job-portal-backend.onrender.com/api/saved_jobs/user/2");
       const data = await response.json();
       if (Array.isArray(data)) {
         const jobDetails = await Promise.all(
           data.map(async (job) => {
-            const res = await fetch(`http://localhost:3000/api/jobs/${job.job_id}`);
+            const res = await fetch(`https://job-portal-backend.onrender.com/api/jobs/${job.job_id}`);
             return await res.json();
           })
         );
@@ -36,7 +36,7 @@ const SavedJobs = () => {
 
   const handleRemove = async (jobId) => {
     try {
-      const response = await fetch("http://localhost:3000/api/saved_jobs", {
+      const response = await fetch("https://job-portal-backend.onrender.com/api/saved_jobs", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: 2, job_id: jobId }),

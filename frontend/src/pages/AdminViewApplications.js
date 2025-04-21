@@ -20,7 +20,7 @@ const AdminViewApplications = () => {
 
   const fetchApplications = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/applications/admin/${id}`);
+      const res = await fetch(`https://job-portal-backend.onrender.com/api/applications/admin/${id}`);
       const data = await res.json();
       setApplications(data);
     } catch (err) {
@@ -30,7 +30,7 @@ const AdminViewApplications = () => {
 
   const handleStatusChange = async (applicationId, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/applications/${applicationId}/status`, {
+      const res = await fetch(`https://job-portal-backend.onrender.com/api/applications/${applicationId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -47,7 +47,7 @@ const AdminViewApplications = () => {
 
   const handleDelete = async (applicationId) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/applications/${applicationId}`, {
+      const res = await fetch(`https://job-portal-backend.onrender.com/api/applications/${applicationId}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -94,7 +94,7 @@ const AdminViewApplications = () => {
                 <td style={styles.td}>{app.email}</td>
                 <td style={styles.td}>{app.experience}</td>
                 <td style={styles.td}>
-                  <a href={`http://localhost:3000/uploads/${app.resume}`} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://job-portal-backend.onrender.com/uploads/${app.resume}`} target="_blank" rel="noopener noreferrer">
                     View Resume
                   </a>
                 </td>
