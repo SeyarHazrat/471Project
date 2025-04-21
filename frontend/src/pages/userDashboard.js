@@ -6,7 +6,6 @@ const UserDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [experienceFilter, setExperienceFilter] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 9;
 
@@ -50,7 +49,7 @@ const UserDashboard = () => {
   const handleJobClick = (id) => navigate(`/job/${id}`);
 
   const experienceLevels = [...new Set(jobs.map(job => job.experience_level))];
-  const locations = [...new Set(jobs.map(job => job.location))];
+  
 
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
   const indexOfLastJob = currentPage * jobsPerPage;

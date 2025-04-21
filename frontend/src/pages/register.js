@@ -36,7 +36,7 @@ const Register = () => {
   return (
     <div style={styles.container}>
       {/* Displaying logo at top-left */}
-      <img src={"/C:/Users/seyar/OneDrive/Desktop/job-portal/frontend/public/schoolLogo.png"} style={styles.logo} />
+      <img src={"/C:/Users/seyar/OneDrive/Desktop/job-portal/frontend/public/schoolLogo.png"} alt = "" style={styles.logo} />
       <h2>Welcome! Create an Account</h2>
       
       {/* Registration form */}
