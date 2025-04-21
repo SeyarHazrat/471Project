@@ -6,6 +6,7 @@ const UserDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [experienceFilter, setExperienceFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 9;
 

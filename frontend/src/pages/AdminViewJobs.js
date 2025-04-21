@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const AdminViewJobs = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
-  
+  const [userId, setUserId] = useState(null);
 
   // Fetch jobs when component mounts
   useEffect(() => {
