@@ -7,7 +7,7 @@ const JobsGrid = () => {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      const response = await fetch("https://job-portal-backend.onrender.com/api/jobs"); 
+      const response = await fetch("https://four71project.onrender.com/api/jobs"); 
       const data = await response.json();
       if (response.ok) {
         setJobs(data);

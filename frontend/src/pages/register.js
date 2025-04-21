@@ -13,7 +13,7 @@ const Register = () => {
     e.preventDefault();  
 
     // Send information 
-    const response = await fetch("https://job-portal-backend.onrender.com/api/register", {
+    const response = await fetch("https://four71project.onrender.com/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

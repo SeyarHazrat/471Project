@@ -21,7 +21,7 @@ const AdminViewJobs = () => {
   // Fetch jobs posted by current admin
   const fetchJobs = async (id) => {
     try {
-      const res = await fetch(`https://job-portal-backend.onrender.com/api/jobs/user/${id}`);
+      const res = await fetch(`https://four71project.onrender.com/api/jobs/user/${id}`);
       const data = await res.json();
       setJobs(data);
     } catch (err) {
@@ -37,7 +37,7 @@ const AdminViewJobs = () => {
   const handleDelete = async (jobId) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
     try {
-      const res = await fetch(`https://job-portal-backend.onrender.com/api/jobs/${jobId}`, {
+      const res = await fetch(`https://four71project.onrender.com/api/jobs/${jobId}`, {
         method: "DELETE",
       });
       if (res.ok) {

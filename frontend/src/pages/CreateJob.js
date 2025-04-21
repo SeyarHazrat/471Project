@@ -16,7 +16,7 @@ const CreateJob = () => {
 
     try {
       // Check if company exists or create new
-      const companyRes = await fetch("https://job-portal-backend.onrender.com/api/companies/check-or-create", {
+      const companyRes = await fetch("https://four71project.onrender.com/api/companies/check-or-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: companyName }),
@@ -37,7 +37,7 @@ const CreateJob = () => {
       formData.append("company_id", companyId);
       if (image) formData.append("image", image);
 
-      const response = await fetch("https://job-portal-backend.onrender.com/api/jobs", {
+      const response = await fetch("https://four71project.onrender.com/api/jobs", {
         method: "POST",
         body: formData,
       });

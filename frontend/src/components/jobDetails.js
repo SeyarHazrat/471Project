@@ -17,17 +17,17 @@ const JobDetails = () => {
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
-        const response = await fetch(`https://job-portal-backend.onrender.com/api/jobs/${id}`);
+        const response = await fetch(`https://four71project.onrender.com/api/jobs/${id}`);
         if (!response.ok) throw new Error("Job not found");
         const data = await response.json();
         setJob(data);
 
-        const companyResponse = await fetch(`https://job-portal-backend.onrender.com/api/companies/${data.company_id}`);
+        const companyResponse = await fetch(`https://four71project.onrender.com/api/companies/${data.company_id}`);
         if (!companyResponse.ok) throw new Error("Company not found");
         const companyData = await companyResponse.json();
         setCompany(companyData);
 
-        const reviewRes = await fetch(`https://job-portal-backend.onrender.com/api/reviews/company/${data.company_id}`);
+        const reviewRes = await fetch(`https://four71project.onrender.com/api/reviews/company/${data.company_id}`);
         if (!reviewRes.ok) throw new Error("Reviews not found");
         const reviewData = await reviewRes.json();
         if (reviewData.length === 0) {
@@ -56,7 +56,7 @@ const JobDetails = () => {
       
 
     try {
-      const response = await fetch("https://job-portal-backend.onrender.com/api/apply", {
+      const response = await fetch("https://four71project.onrender.com/api/apply", {
         method: "POST",
         body: formData,
       });
@@ -78,7 +78,7 @@ const JobDetails = () => {
   // Handle saving a rating
   const handleRatingSubmit = async () => {
     try {
-      const res = await fetch("https://job-portal-backend.onrender.com/api/reviews", {
+      const res = await fetch("https://four71project.onrender.com/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reviewer_id: 2, company_id: job.company_id, rating, review_text: null })
@@ -101,7 +101,7 @@ const JobDetails = () => {
   // Handle saving a job
   const handleSaveJob = async () => {
     try {
-      const response = await fetch("https://job-portal-backend.onrender.com/api/saved_jobs", {
+      const response = await fetch("https://four71project.onrender.com/api/saved_jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: 2, job_id: job.id })
