@@ -6,7 +6,9 @@ const UserApplications = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("User"));
+    const storedData = JSON.parse(localStorage.getItem("user"));
+    const user = storedData?.user || storedData; // handles both Option 1 and Option 2 from before
+
     if (!user) {
       alert("User not logged in");
       navigate("/login");
